@@ -42,17 +42,52 @@ class ReadVideoFile:
                 continue
 
             while( cap.isOpened() ):
-                ret, img = cap.read()
+                ret, frame = cap.read()
                 if ret:
-                    imgin = img[:, :, (0, 1, 2)]
+                    frame = frame[:, :, (0, 1, 2)]
+                    cv.imshow( "camOut", frame )
+                    cv.waitKey( 1 )
+                    time.sleep( 1 / cap.get(cv.CAP_PROP_FPS) )
                 else:
                     break
 
-                cv.imshow( "camOut", img )
-                cv.waitKey( 1 )
-                time.sleep( 1 / cap.get(cv.CAP_PROP_FPS) )
+            cap.release()
+        cv.destroyAllWindows()
+
+    def convertToAVI(self):
+        folder = 'MP4Videos'
+        self.createDirectory( folder=folder )
+        self.getFilteredFiles()
+
+        for fname in self.filtered_files:
+            cap = cv.VideoCapture(self.directory_path + '/' + fname)
+            if not cap.isOpened():
+                continue
+            
+            filename = fname.replace(fname[-4:],'.avi')
+            fourcc = cv.VideoWriter_fourcc(*'XVID')
+            fps = 20.0
+            frame_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+            frame_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+            resolution = (frame_width, frame_height)
+            outputVideo = cv.VideoWriter(
+                    self.directory_path + '/' + folder + '/' + filename, 
+                    fourcc, 
+                    fps, 
+                    resolution)
+
+            while( cap.isOpened() ):
+                ret, frame = cap.read()
+                if ret == True:
+                    outputVideo.write(frame)
+                    if cv.waitKey(1) & 0xFF == ord('q'):
+                        break
+                else:
+                    break
 
             cap.release()
+            outputVideo.release()
+
         cv.destroyAllWindows()
 
 
@@ -62,40 +97,40 @@ class ReadVideoFile:
         self.getFilteredFiles()
 
         for fname in self.filtered_files:
-            cap = cv.VideoCapture(fname)
+            cap = cv.VideoCapture(self.directory_path + '/' + fname)
             if not cap.isOpened():
                 continue
             
             filename = fname.replace(fname[-4:],'.mp4')
             fourcc = cv.VideoWriter_fourcc(*'mp4v')
-            #fourcc = cv.VideoWriter_fourcc('M','P','4','V')
-            fps = 29.0
-            resolution = (640, 480)
-            videoOutPut = cv.VideoWriter(
+            fps = 20.0
+            frame_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+            frame_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+            resolution = (frame_width, frame_height)
+            outputVideo = cv.VideoWriter(
                     self.directory_path + '/' + folder + '/' + filename, 
                     fourcc, 
                     fps, 
                     resolution)
-            
+
             while( cap.isOpened() ):
                 ret, frame = cap.read()
                 if ret == True:
                     #imgin = frame[:, :, (0, 1, 2)]
 
-                    videoOutPut.write(frame)
+                    outputVideo.write(frame)
 
-                    cv.imshow( "camOut", frame )
-                    cv.waitKey( 1 )
-                    time.sleep( 1 / cap.get(cv.CAP_PROP_FPS) )
+                    #cv.imshow( "camOut", frame )
+                    #cv.waitKey( 1 )
+                    #time.sleep( 1 / cap.get(cv.CAP_PROP_FPS) )
 
                     if cv.waitKey(1) & 0xFF == ord('q'):
                         break
-
                 else:
                     break
 
             cap.release()
-            videoOutPut.release()
+            outputVideo.release()
 
         cv.destroyAllWindows()
 
@@ -108,6 +143,8 @@ if __name__ == '__main__':
         path = os.path.abspath(os.getcwd())
     else:
         path = sys.argv[1]
+
+    print(path)
 
     rvf = ReadVideoFile(path)
     rvf.convertToMP4()
