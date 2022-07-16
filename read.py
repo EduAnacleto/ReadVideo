@@ -144,7 +144,5 @@ if __name__ == '__main__':
     else:
         path = sys.argv[1]
 
-    print(path)
-
     rvf = ReadVideoFile(path)
     rvf.convertToMP4()
